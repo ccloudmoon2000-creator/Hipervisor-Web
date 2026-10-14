@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hipervisor Web · v86</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<!-- Ícones SVG inline -->
+<svg hidden>
+<symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></symbol>
+<symbol id="i-pause" viewBox="0 0 24 24"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></symbol>
+<symbol id="i-redo" viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7a5 5 0 1 1-5 5H5a7 7 0 1 0 7-7z"/></symbol>
+<symbol id="i-power" viewBox="0 0 24 24"><path d="M11 2h2v10h-2zM6.3 5.7l1.4 1.4A7 7 0 1 0 16.3 7.1l1.4-1.4A9 9 0 1 1 6.3 5.7z"/></symbol>
+<symbol id="i-key" viewBox="0 0 24 24"><path d="M3 6h18v12H3zm2 2v2h2V8zm4 0v2h2V8zm4 0v2h2V8zm4 0v2h2V8zM7 14v2h10v-2z"/></symbol>
+<symbol id="i-cam" viewBox="0 0 24 24"><path d="M9 3 7.2 5H4a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-3.2L15 3zm3 5a5 5 0 1 1 0 10 5 5 0 0 1 0-10z"/></symbol>
+<symbol id="i-full" viewBox="0 0 24 24"><path d="M4 4h6v2H6v4H4zm10 0h6v6h-2V6h-4zM4 14h2v4h4v2H4zm14 0h2v6h-6v-2h4z"/></symbol>
+<symbol id="i-down" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7zM5 18v2h14v-2z"/></symbol>
+<symbol id="i-up" viewBox="0 0 24 24"><path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/></symbol>
+<symbol id="i-eject" viewBox="0 0 24 24"><path d="M5 17h14v2H5zm7-12L5.3 15h13.4z"/></symbol>
+<symbol id="i-snd" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9zm13.5 3A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4z"/></symbol>
+<symbol id="i-disc" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 8a2 2 0 1 1 0 4 2 2 0 0 1 0-4z"/></symbol>
+</svg>
+
+<div id="app">
+  <aside>
+    <h1><svg class="i"><use href="#i-disc"/></svg> Hipervisor Web</h1>
+
+    <section>
+      <h2>Imagem ISO</h2>
+      <button class="primary" data-a="escolher"><svg class="i"><use href="#i-up"/></svg>Escolher ISO</button>
+      <div id="isoinfo" class="muted">Nenhuma ISO carregada</div>
+      <h3>Recentes</h3>
+      <ul id="recentes"></ul>
+    </section>
+
+    <section>
+      <h2>Configuração</h2>
+      <label>RAM <output id="ramo"></output><input type="range" id="ram" min="64" max="2048" step="64" value="256"></label>
+      <label>Memória de vídeo <output id="vgao"></output><input type="range" id="vga" min="8" max="64" step="8" value="16"></label>
+      <label>Ordem de boot
+        <select id="boot"><option value="cd">CD primeiro</option><option value="hd">Disco primeiro</option></select>
+      </label>
+      <label class="chk"><input type="checkbox" id="usadisco"> Criar disco virtual vazio</label>
+      <label>Tamanho do disco <output id="disko"></output><input type="range" id="disk" min="256" max="8192" step="256" value="1024"></label>
+    </section>
+
+    <p class="aviso">⚠ Só emula x86 de 32 bits. Melhor com sistemas leves: Tiny Core, Alpine, Debian 32 bits, KolibriOS, FreeDOS, Windows 95/98. O desempenho depende do browser e do PC.</p>
+  </aside>
+
+  <main>
+    <div id="bar">
+      <button data-a="iniciar" id="b-iniciar"><svg class="i"><use href="#i-play"/></svg>Iniciar</button>
+      <button data-a="pausar" data-run><svg class="i"><use href="#i-pause"/></svg><span id="b-pausa">Pausar</span></button>
+      <button data-a="reiniciar" data-run><svg class="i"><use href="#i-redo"/></svg>Reiniciar</button>
+      <button data-a="desligar" data-run><svg class="i"><use href="#i-power"/></svg>Desligar</button>
+      <button data-a="cad" data-run><svg class="i"><use href="#i-key"/></svg>Ctrl+Alt+Del</button>
+      <button data-a="captura" data-run><svg class="i"><use href="#i-key"/></svg><span id="b-cap">Capturar</span></button>
+      <span class="sep"></span>
+      <button data-a="trocar" data-run><svg class="i"><use href="#i-disc"/></svg>Trocar CD</button>
+      <button data-a="ejetar" data-run><svg class="i"><use href="#i-eject"/></svg>Ejetar</button>
+      <button data-a="som" data-run><svg class="i"><use href="#i-snd"/></svg><span id="b-som">Som: off</span></button>
+      <span class="sep"></span>
+      <button data-a="guardar" data-run><svg class="i"><use href="#i-down"/></svg>Guardar estado</button>
+      <button data-a="restaurar" data-run><svg class="i"><use href="#i-up"/></svg>Restaurar</button>
+      <button data-a="foto" data-run><svg class="i"><use href="#i-cam"/></svg>Screenshot</button>
+      <button data-a="full" data-run><svg class="i"><use href="#i-full"/></svg>Ecrã inteiro</button>
+      <label class="escala">Escala <input type="range" id="escala" min="0.5" max="3" step="0.25" value="1"></label>
+    </div>
+
+    <div id="stage">
+      <div id="drop">
+        <svg class="i big"><use href="#i-disc"/></svg>
+        <p>Arrasta uma ISO para aqui</p>
+        <small>ou usa o botão "Escolher ISO" · ficheiros .iso</small>
+      </div>
+      <div id="screen" hidden><div></div><canvas></canvas></div>
+    </div>
+  </main>
+
+  <footer>
+    <div id="status"><i id="dot" data-s="off"></i><span id="st">Parado</span>
+      <span class="stats">FPS UI <b id="s-fps">0</b> · <b id="s-ips">0</b> MIPS · RAM <b id="s-ram">0</b> · <b id="s-t">00:00:00</b></span></div>
+    <div id="log" aria-label="Consola e log"></div>
+  </footer>
+</div>
+<div id="toast"></div>
+<input type="file" id="f-iso" accept=".iso" hidden>
+<input type="file" id="f-cd" accept=".iso" hidden>
+<input type="file" id="f-estado" hidden>
+
+<!-- Motor v86 (local) e aplicação (módulos ES) -->
+<script src="lib/libv86.js"></script>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
